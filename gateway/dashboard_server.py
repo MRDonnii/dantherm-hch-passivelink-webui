@@ -127,7 +127,7 @@ class DashboardHttpServer:
         for service, label in (("NetworkManager", "NetworkManager"), ("systemd-networkd", "systemd-networkd"), ("dhcpcd", "dhcpcd"), ("networking", "ifupdown")):
             if self._run("/usr/bin/systemctl", "is-active", service) == "active": stack = label; break
         data["network_stack"] = stack
-        for service, prefix in (("dantherm-gateway.service", "gateway"), ("dantherm-passivelink-onewire.service", "onewire"), ("ssh.service", "ssh")):
+        for service, prefix in ((os.getenv("DANTHERM_GATEWAY_SERVICE","dantherm-webui-gateway.service"), "gateway"), (os.getenv("DANTHERM_ONEWIRE_SERVICE","dantherm-webui-onewire.service"), "onewire"), ("ssh.service", "ssh")):
             output = self._run("/usr/bin/systemctl", "show", service, "-p", "ActiveState", "-p", "SubState", "-p", "MainPID", "-p", "NRestarts", "-p", "MemoryCurrent") or ""
             values = dict(line.split("=", 1) for line in output.splitlines() if "=" in line)
             for key, value in values.items(): data[f"service_{prefix}_{key.lower()}"] = value

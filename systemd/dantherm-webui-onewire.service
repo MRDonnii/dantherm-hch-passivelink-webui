@@ -1,0 +1,21 @@
+[Unit]
+Description=Dantherm WebUI optional OneWire and Pi diagnostics
+After=network.target
+
+[Service]
+Type=simple
+User=passivelink-webui
+Group=passivelink-webui
+SupplementaryGroups=video
+WorkingDirectory=/opt/dantherm-passivelink-webui
+EnvironmentFile=/etc/dantherm-passivelink-webui/gateway.env
+ExecStart=/opt/dantherm-passivelink-webui/venv/bin/python /opt/dantherm-passivelink-webui/onewire_temperature_server.py --config /etc/dantherm-passivelink-webui/onewire.json --bind 127.0.0.1 --port 4197
+Restart=always
+RestartSec=3
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict
+
+[Install]
+WantedBy=multi-user.target

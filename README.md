@@ -31,7 +31,22 @@ Install [MRDonnii/dantherm-hch-passivelink](https://github.com/MRDonnii/dantherm
 
 [![Open your Home Assistant instance and add the integration repository to HACS](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=MRDonnii&repository=dantherm-hch-passivelink&category=integration)
 
-## Gateway integration
+## Install everything on Raspberry Pi OS / Ubuntu / Debian
+
+Find the adapter under `/dev/serial/by-id/`, then run:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/MRDonnii/dantherm-hch-passivelink-webui/main/install.sh \
+  | sudo bash -s -- --device /dev/serial/by-id/usb-YOUR_ADAPTER
+```
+
+Add `--enable-onewire` for optional DS18B20 sensors and host diagnostics.
+
+- [Komplet dansk installations- og RS485-guide](docs/installation.da.md)
+- The installer supports Raspberry Pi OS, Debian 12 and Ubuntu 22.04/24.04.
+- It installs the receive-only serial gateway, raw TCP port for Home Assistant, WebUI, login, systemd services and the allowlisted admin helper.
+
+## Embedding in an existing gateway
 
 `gateway/dashboard_server.py` is embedded in the gateway process so both components use the same in-memory state without opening another RS485 reader:
 

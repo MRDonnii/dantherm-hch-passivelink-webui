@@ -1,0 +1,17 @@
+name: Validate
+on: [push, pull_request, workflow_dispatch]
+permissions: {}
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install pytest pyserial==3.5
+      - run: bash -n install.sh uninstall.sh
+      - run: python -m py_compile gateway/*.py
+      - run: pytest -q
+      - run: node --check gateway/webui/dashboard.js
+      - run: node --check gateway/webui/auth.js

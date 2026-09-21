@@ -9,7 +9,7 @@ BIND = os.getenv("DANTHERM_ADMIN_BIND", "127.0.0.1")
 PORT = int(os.getenv("DANTHERM_ADMIN_PORT", "4198"))
 PROFILE_FILE = Path("/var/lib/dantherm-admin/power-profile")
 PROFILES = {"powersave": "powersave", "balanced": "ondemand", "performance": "performance"}
-SERVICES = {"gateway": "dantherm-gateway.service", "onewire": "dantherm-passivelink-onewire.service"}
+SERVICES = {"gateway": os.getenv("DANTHERM_GATEWAY_SERVICE","dantherm-webui-gateway.service"), "onewire": os.getenv("DANTHERM_ONEWIRE_SERVICE","dantherm-webui-onewire.service")}
 
 def set_profile(profile):
     governor = PROFILES[profile]
