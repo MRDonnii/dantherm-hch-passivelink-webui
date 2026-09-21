@@ -1,0 +1,80 @@
+# Dantherm HCH PassiveLink WebUI
+
+A modern, responsive local WebUI for a Dantherm HCH5 PassiveLink Raspberry Pi gateway. It visualises live ventilation data without adding RS485 write access.
+
+> This is an unofficial community project and is not developed, approved or supported by Dantherm Group.
+
+![WebUI overview](docs/images/webui/overview-desktop.png)
+
+## Highlights
+
+- physically meaningful normal and bypass airflow diagrams;
+- live heat-recovery, after-heater, fan, filter and air-quality states;
+- desktop, tablet and mobile layouts with persistent light/dark themes;
+- 30-day bounded SQLite history;
+- Raspberry Pi, service, OneWire and network diagnostics;
+- first-run owner setup, salted PBKDF2 password hashes, server-side sessions, CSRF protection and login rate limiting;
+- owner-controlled username/password changes and an explicit security warning before login can be disabled;
+- allowlisted Raspberry Pi reboot, shutdown, service restart and CPU power profiles;
+- direct HACS, GitHub and Home Assistant config-flow links for the companion integration.
+
+<p>
+  <img src="docs/images/webui/overview-mobile.png" alt="Mobile overview" width="300">
+  <img src="docs/images/webui/first-user-setup.png" alt="First-user setup" width="300">
+</p>
+
+![Home Assistant integration links](docs/images/webui/home-assistant.png)
+
+## Companion Home Assistant integration
+
+Install [MRDonnii/dantherm-hch-passivelink](https://github.com/MRDonnii/dantherm-hch-passivelink) through HACS, then select **RS485 over TCP** and point it at the PassiveLink gateway, normally port `4196`.
+
+[![Open your Home Assistant instance and add the integration repository to HACS](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=MRDonnii&repository=dantherm-hch-passivelink&category=integration)
+
+## Gateway integration
+
+`gateway/dashboard_server.py` is embedded in the gateway process so both components use the same in-memory state without opening another RS485 reader:
+
+```python
+from dashboard_server import DashboardHttpServer
+
+dashboard = DashboardHttpServer(
+    "0.0.0.0",
+    8080,
+    gateway_state,
+    "Dantherm HCH5",
+    "http://127.0.0.1:4197/temperatures",
+)
+dashboard.start()
+```
+
+Copy `gateway/dashboard_server.py`, `gateway/webui_auth.py` and `gateway/webui/` beside the gateway application. The gateway service user must be able to write `/var/lib/dantherm-hch5-ha/` for history and authentication state.
+
+The optional privileged helper `gateway/dantherm_pi_admin_api.py` must run as a separately sandboxed root systemd service. It accepts only a fixed action/service/profile allowlist and requires a bearer token. Pass that same token to the unprivileged dashboard process as `DANTHERM_REBOOT_TOKEN`. The helper and dashboard default to loopback port `4198`; override `DANTHERM_ADMIN_BIND`, `DANTHERM_ADMIN_PORT` and `DANTHERM_ADMIN_URL` only when required. Never expose an unrestricted shell or place the token in browser-side code.
+
+Reference files are provided in [`systemd/`](systemd/). Generate a unique token, install `admin.env.example` as root-owned `/etc/dantherm-webui/admin.env` with mode `0600`, and give the dashboard service the same token through its own root-owned environment file.
+
+## Security model
+
+- No endpoint can write to RS485.
+- First use is locked until the owner creates an account.
+- Passwords are stored as salted PBKDF2-SHA256 hashes, never plaintext.
+- Sessions are server-side and cookies are `HttpOnly` and `SameSite=Strict`.
+- State-changing browser requests require a CSRF token.
+- Login can be disabled only with the current password and an explicit risk acknowledgement.
+- Network settings remain read-only on netboot installations until their real network stack and rollback path are verified.
+
+The WebUI is designed for a trusted local network. Put it behind HTTPS or a trusted reverse proxy before exposing it beyond the LAN.
+
+## Development and tests
+
+```bash
+python3 -m unittest discover -s tests -v
+node --check gateway/webui/dashboard.js
+node --check gateway/webui/auth.js
+python3 -m py_compile gateway/*.py
+```
+
+## License
+
+MIT — see [LICENSE](LICENSE).

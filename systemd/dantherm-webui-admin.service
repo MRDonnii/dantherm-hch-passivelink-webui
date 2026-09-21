@@ -1,0 +1,20 @@
+[Unit]
+Description=Dantherm WebUI allowlisted administration helper
+After=network.target
+
+[Service]
+Type=simple
+User=root
+Group=root
+EnvironmentFile=/etc/dantherm-webui/admin.env
+ExecStart=/usr/bin/python3 /opt/dantherm-webui/dantherm_pi_admin_api.py
+Restart=on-failure
+RestartSec=3
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict
+StateDirectory=dantherm-admin
+
+[Install]
+WantedBy=multi-user.target
