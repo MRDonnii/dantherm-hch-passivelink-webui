@@ -30,11 +30,13 @@ class Handler(BaseHTTPRequestHandler):
             return self.reply(200,{"power_profile":next((p for p,g in PROFILES.items() if g==governor),governor),"governor":governor})
         self.reply(404,{"error":"not_found"})
     def do_POST(self):
-        if self.path != "/action": return self.reply(404,{"error":"not_found"})
         if not self.authorized(): return self.reply(401,{"error":"unauthorized"})
-        try:
-            length=min(int(self.headers.get("Content-Length","0")),1024); data=json.loads(self.rfile.read(length)); action=data.get("action"); target=data.get("target")
-        except (ValueError,TypeError,json.JSONDecodeError): return self.reply(400,{"error":"invalid_json"})
+        if self.path == "/reboot": action,target="reboot",None
+        elif self.path == "/action":
+            try:
+                length=min(int(self.headers.get("Content-Length","0")),1024); data=json.loads(self.rfile.read(length)); action=data.get("action"); target=data.get("target")
+            except (ValueError,TypeError,json.JSONDecodeError): return self.reply(400,{"error":"invalid_json"})
+        else: return self.reply(404,{"error":"not_found"})
         if action == "power_profile" and target in PROFILES:
             set_profile(target); return self.reply(200,{"ok":True,"power_profile":target})
         if action == "restart_service" and target in SERVICES:
