@@ -159,11 +159,26 @@ class DashboardHttpServer:
                 if self._session() is None and dashboard.auth.enabled(): self.send_response(302); self.send_header("Location","/login"); self.end_headers(); return
                 if parsed.path in ("/", "/index.html"): self._file(dashboard.web_root / "index.html", "text/html; charset=utf-8")
                 elif parsed.path in ("/state.json", "/api"): self._json(dashboard.snapshot())
+                elif parsed.path == "/api/diagnostics/report": self._diagnostic_report()
                 elif parsed.path == "/history.json":
                     name = parse_qs(parsed.query).get("range", ["24h"])[0]; self._json({"range": name, "samples": dashboard.history.query(name)})
                 elif parsed.path.startswith("/assets/"):
                     target = dashboard.web_root / Path(parsed.path).name; content_type = ASSET_TYPES.get(target.suffix); self._file(target, content_type) if content_type else self.send_error(404)
                 else: self.send_error(404)
+            def _diagnostic_report(self):
+                if not dashboard.admin_token: return self.send_error(503,"Diagnostic helper unavailable")
+                request=urllib.request.Request(f"{dashboard.admin_url.rstrip('/')}/diagnostics",headers={"Authorization":f"Bearer {dashboard.admin_token}"})
+                try:
+                    with urllib.request.build_opener(urllib.request.ProxyHandler({})).open(request,timeout=60) as response:
+                        helper_payload=response.read(8*1024*1024+1); disposition=response.headers.get("Content-Disposition","")
+                except (OSError,urllib.error.URLError): return self.send_error(503,"Diagnostic helper unavailable")
+                if len(helper_payload)>8*1024*1024: return self.send_error(413,"Diagnostic report too large")
+                snapshot=dashboard.snapshot(); safe_snapshot={key:("[REDACTED]" if any(word in key.lower() for word in ("token","password","secret","cookie","authorization")) else value) for key,value in snapshot.items()}
+                state=json.dumps(safe_snapshot,indent=2,ensure_ascii=False,default=str).encode("utf-8")
+                body=helper_payload+b"\n\n==================== PASSIVELINK CURRENT STATE ====================\n"+state+b"\n"
+                filename="dantherm-debug.txt"
+                if 'filename="' in disposition: filename=disposition.split('filename="',1)[1].split('"',1)[0]
+                self.send_response(200); self.send_header("Content-Type","text/plain; charset=utf-8"); self.send_header("Content-Disposition",f'attachment; filename="{filename}"'); self.send_header("Cache-Control","no-store"); self.send_header("X-Content-Type-Options","nosniff"); self.send_header("Content-Length",str(len(body))); self.end_headers(); self.wfile.write(body)
             def do_POST(self):
                 if self.path == "/api/auth/setup":
                     if dashboard.auth.configured(): return self._json_error(409,"Allerede konfigureret")

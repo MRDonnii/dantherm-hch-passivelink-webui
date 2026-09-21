@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.0.1 — 2026-09-21
+
+- Added a one-click, single-file `.txt` debug report under Diagnostics.
+- Bundled current PassiveLink state, service journals, seven days of system warnings, kernel warnings, Pi health, disk, memory and network status.
+- Added bounded output, fixed read-only command allowlisting, concurrent-generation protection and automatic credential redaction.
+- Added diagnostics tests and installation/privacy documentation.
+
 ## 1.0.0 — 2026-09-21
 
 - Initial stable standalone WebUI release.

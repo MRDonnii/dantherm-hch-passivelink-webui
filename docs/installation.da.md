@@ -101,6 +101,12 @@ Home Assistant-forbindelsen er read-only. WebUI’ens Pi-administration ændrer 
 
 ## Kontrol efter installation
 
+### Debugrapport
+
+Under **Diagnostik** kan ejeren hente én tidsstemplet `.txt`-fil, som er klar til at åbne eller sende videre. Rapporten samler den aktuelle PassiveLink-state, status og journaler for gateway, OneWire og admin-helper, Raspberry Pi-helbred, disk/RAM, netværk samt system- og kerneladvarsler.
+
+Indsamlingen bruger kun en fast allowlist af read-only kommandoer. Kendte adgangskoder, tokens, cookies og Authorization-værdier maskeres automatisk, og logmængden er begrænset. Rapporten kan stadig indeholde lokale hostnames, IP-adresser og sensor-id'er, så filen bør gennemgås før deling.
+
 ```bash
 systemctl status dantherm-webui-gateway.service
 systemctl status dantherm-webui-admin.service

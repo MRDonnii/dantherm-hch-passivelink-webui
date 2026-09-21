@@ -58,6 +58,7 @@ install -o root -g root -m 0644 "${source_dir}/systemd/dantherm-webui-gateway.se
 install -o root -g root -m 0644 "${source_dir}/systemd/dantherm-webui-admin.service" /etc/systemd/system/
 install -d /opt/dantherm-webui
 install -o root -g root -m 0755 "${source_dir}/gateway/dantherm_pi_admin_api.py" /opt/dantherm-webui/dantherm_pi_admin_api.py
+install -o root -g root -m 0644 "${source_dir}/gateway/diagnostics_report.py" /opt/dantherm-webui/diagnostics_report.py
 install -d -m 0750 /etc/dantherm-webui
 cat > /etc/dantherm-webui/admin.env <<EOF
 DANTHERM_REBOOT_TOKEN=${token}

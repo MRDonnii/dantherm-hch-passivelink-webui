@@ -16,6 +16,7 @@ A modern, responsive local WebUI for a Dantherm HCH5 PassiveLink Raspberry Pi ga
 - first-run owner setup, salted PBKDF2 password hashes, server-side sessions, CSRF protection and login rate limiting;
 - owner-controlled username/password changes and an explicit security warning before login can be disabled;
 - allowlisted Raspberry Pi reboot, shutdown, service restart and CPU power profiles;
+- one-click, single-file debug report with current state, seven days of bounded service/system logs and Raspberry Pi health data;
 - direct HACS, GitHub and Home Assistant config-flow links for the companion integration.
 
 <p>
@@ -78,6 +79,7 @@ Reference files are provided in [`systemd/`](systemd/). Generate a unique token,
 - State-changing browser requests require a CSRF token.
 - Login can be disabled only with the current password and an explicit risk acknowledgement.
 - Network settings remain read-only on netboot installations until their real network stack and rollback path are verified.
+- Debug reports are plain-text, bounded in size and redact known password, token, cookie and authorization patterns. Review a report before sharing it because logs can still contain installation-specific details such as hostnames, addresses and sensor IDs.
 
 The WebUI is designed for a trusted local network. Put it behind HTTPS or a trusted reverse proxy before exposing it beyond the LAN.
 

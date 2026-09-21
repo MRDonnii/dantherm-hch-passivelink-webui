@@ -3,6 +3,7 @@
 import hmac, json, os, subprocess, threading, time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
+from diagnostics_report import build_report
 
 TOKEN = os.environ["DANTHERM_REBOOT_TOKEN"]
 BIND = os.getenv("DANTHERM_ADMIN_BIND", "127.0.0.1")
@@ -10,6 +11,8 @@ PORT = int(os.getenv("DANTHERM_ADMIN_PORT", "4198"))
 PROFILE_FILE = Path("/var/lib/dantherm-admin/power-profile")
 PROFILES = {"powersave": "powersave", "balanced": "ondemand", "performance": "performance"}
 SERVICES = {"gateway": os.getenv("DANTHERM_GATEWAY_SERVICE","dantherm-webui-gateway.service"), "onewire": os.getenv("DANTHERM_ONEWIRE_SERVICE","dantherm-webui-onewire.service")}
+REPORT_SERVICES = {**SERVICES, "admin": os.getenv("DANTHERM_ADMIN_SERVICE", "dantherm-webui-admin.service")}
+DIAGNOSTICS_LOCK = threading.Lock()
 
 def set_profile(profile):
     governor = PROFILES[profile]
@@ -25,6 +28,11 @@ class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         if self.path == "/health": return self.reply(200,{"ok":True})
         if not self.authorized(): return self.reply(401,{"error":"unauthorized"})
+        if self.path == "/diagnostics":
+            if not DIAGNOSTICS_LOCK.acquire(blocking=False): return self.reply(429,{"error":"diagnostics_busy"})
+            try: payload, filename = build_report(REPORT_SERVICES)
+            finally: DIAGNOSTICS_LOCK.release()
+            self.send_response(200); self.send_header("Content-Type","text/plain; charset=utf-8"); self.send_header("Content-Disposition",f'attachment; filename="{filename}"'); self.send_header("Cache-Control","no-store"); self.send_header("X-Content-Type-Options","nosniff"); self.send_header("Content-Length",str(len(payload))); self.end_headers(); self.wfile.write(payload); return
         if self.path == "/status":
             governor=Path("/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor").read_text().strip()
             return self.reply(200,{"power_profile":next((p for p,g in PROFILES.items() if g==governor),governor),"governor":governor})
